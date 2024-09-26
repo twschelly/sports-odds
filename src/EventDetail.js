@@ -1,21 +1,19 @@
 import React, { useState, useEffect } from 'react';
+import { useParams } from 'react-router-dom';
 
-// Function to group markets by name
-const groupMarketsByName = (games) => {
+// Group markets by name
+const groupMarketsByName = (sportsbooks) => {
     const groupedMarkets = {};
 
-    games.forEach(game => {
-        game.sportsbooks.forEach(sportsbook => {
-            sportsbook.odds.forEach(odd => {
-                if (!groupedMarkets[odd.market]) {
-                    groupedMarkets[odd.market] = [];
-                }
-                groupedMarkets[odd.market].push({
-                    team: odd.name,
-                    price: odd.price,
-                    sportsbook: sportsbook.name,
-                    game: `${game.teams.away.name} vs ${game.teams.home.name}`
-                });
+    sportsbooks.forEach(sportsbook => {
+        sportsbook.odds.forEach(odd => {
+            if (!groupedMarkets[odd.market]) {
+                groupedMarkets[odd.market] = [];
+            }
+            groupedMarkets[odd.market].push({
+                team: odd.name,
+                price: odd.price,
+                sportsbook: sportsbook.name,
             });
         });
     });
@@ -23,28 +21,31 @@ const groupMarketsByName = (games) => {
     return groupedMarkets;
 };
 
-// OddsPage component
-const OddsPage = () => {
-    const [oddsData, setOddsData] = useState([]);
+const EventDetail = () => {
+    const { id } = useParams();  // Event ID from the URL
+    const [event, setEvent] = useState(null);
     const [groupedMarkets, setGroupedMarkets] = useState({});
     const [selectedMarket, setSelectedMarket] = useState(null);
 
     useEffect(() => {
-        fetch('http://127.0.0.1:8000/api/odds/')  // Fetch odds data from Django API
+        fetch('http://127.0.0.1:8000/api/odds/')  // Adjust the URL to fetch odds data
             .then(response => response.json())
             .then(data => {
-                setOddsData(data.games);
-                setGroupedMarkets(groupMarketsByName(data.games));  // Group markets by name
+                const selectedGame = data.games.find(game => game.id === id);
+                setEvent(selectedGame);
+                setGroupedMarkets(groupMarketsByName(selectedGame.sportsbooks));
             });
-    }, []);
+    }, [id]);
 
     const handleMarketChange = (marketName) => {
         setSelectedMarket(marketName);
     };
 
+    if (!event) return <div>Loading...</div>;
+
     return (
         <div>
-            <h1>Sports Betting Odds</h1>
+            <h1>{event.teams.away.name} vs {event.teams.home.name}</h1>
 
             {/* Market Selection */}
             <label htmlFor="market">Select Market:</label>
@@ -63,7 +64,6 @@ const OddsPage = () => {
                     <thead>
                         <tr>
                             <th>Sportsbook</th>
-                            <th>Game</th>
                             <th>Team/Player</th>
                             <th>Odds</th>
                         </tr>
@@ -72,7 +72,6 @@ const OddsPage = () => {
                         {groupedMarkets[selectedMarket].map((market, index) => (
                             <tr key={index}>
                                 <td>{market.sportsbook}</td>
-                                <td>{market.game}</td>
                                 <td>{market.team}</td>
                                 <td>{market.price}</td>
                             </tr>
@@ -84,4 +83,4 @@ const OddsPage = () => {
     );
 };
 
-export default OddsPage;
+export default EventDetail;

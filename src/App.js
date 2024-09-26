@@ -1,11 +1,16 @@
 import React from 'react';
-import OddsPage from './OddsPage';
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import EventList from './EventList';
+import EventDetail from './EventDetail';
 
 function App() {
   return (
-    <div className="App">
-      <OddsPage />
-    </div>
+    <Router>
+      <Routes>
+        <Route path="/" element={<EventList />} />
+        <Route path="/event/:id" element={<EventDetail />} />
+      </Routes>
+    </Router>
   );
 }
 
